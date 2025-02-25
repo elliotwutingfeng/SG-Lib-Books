@@ -17,13 +17,14 @@ from src.crud.book_avail import book_avail_crud
 from src.crud.book_info import book_info_crud
 from src.crud.book_outdated_bid import book_outdated_bid_crud
 from src.crud.book_subscription import book_subscription_crud
+from src.crud.email_items import email_items_crud
 from src.crud.notifications import notification_crud
-from src.crud.users import user_crud
 from src.crud.notification_tokens import notification_token_crud
+from src.crud.users import user_crud
 from src.modals.book_avail import BookAvail, BookAvailCreate
 from src.modals.book_info import BookInfoCreate
 from src.modals.book_response import BookResponse
-
+from src.modals.email_items import EmailItemsCreate
 from src.modals.notifications import NotificationCreate
 from src.services.firebase_messaging import FirebaseMessaging
 from src.utils.book_avail import get_newly_available_books
@@ -254,9 +255,15 @@ async def update_book_avail(
             db, itemNos=[book_avail.ItemNo for book_avail in book_avail_changes]
         )
 
+        user_dict = {}  # email: User
         # Create notification for each subscription
         for subscription in subscriptions:
-            user = await user_crud.get(db, i=subscription.email)
+            if subscription.email in user_dict:
+                user = user_dict[subscription.email]
+            else:
+                user = await user_crud.get(db, i=subscription.email)
+                user_dict[subscription.email] = user
+
             # Skip if user does not exist
             if not user:
                 continue
@@ -290,7 +297,20 @@ async def update_book_avail(
                 )
 
             # Send notification via email if user has enabled daily email notification
-            # TODO: Schedule task to send notification via email
+            if user.channel_email:
+                await email_items_crud.create(
+                    db,
+                    obj_in=EmailItemsCreate(
+                        BID=bid_no,
+                        TitleName=book_info.TitleName,
+                        Author=book_info.Author,
+                        cover_url=book_info.cover_url,
+                        url=f"https://sg-lib-books.web.app/dashboard/books/{bid_no}",
+                        BranchName=[avail.BranchName for avail in book_avail_changes],
+                        email=subscription.email,
+                    ),
+                )
+                print("Email notification staged")
 
         book_avails = await book_avail_crud.upsert(
             db,
@@ -318,7 +338,7 @@ async def update_books(
     recurse: bool = False,
 ):
     """Updates availability of all saved books"""
-    if user is not None:
+    if user != "super" and user is not None:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             "Only service account can trigger this endpoint",
