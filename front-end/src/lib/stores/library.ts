@@ -35,10 +35,13 @@ export const libraryStore = derived(
 						console.warn(`${k} does not exist in database`);
 						continue;
 					}
-					if (bookAvail.StatusDesc == 'On Loan') {
+					if (bookAvail.StatusDesc == 'Available') {
+						libraries[k].availBooks.push(book);
+					} else if (bookAvail.StatusDesc == 'On Loan') {
 						libraries[k].onLoanBooks.push({ ...book, dueDate: `Due ${bookAvail.DueDate}` });
 					} else {
-						libraries[k].availBooks.push(book);
+						// Declare transitory states as unavailable
+						libraries[k].onLoanBooks.push({ ...book, dueDate: undefined });
 					}
 				}
 			}
