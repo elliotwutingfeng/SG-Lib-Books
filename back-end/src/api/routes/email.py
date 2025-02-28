@@ -33,6 +33,8 @@ async def send_emails(db: SDBDep, user: CurrentUser, mailer: MailerDep):
             email_status = mailer.send_daily_email(email, email, items)
             if email_status.startswith("202"):
                 success += 1
+            for item in items:
+                await email_items_crud.delete(db, i=item.id)
 
         print(
             "Emails sent success rate: {success} / {total}".format(
