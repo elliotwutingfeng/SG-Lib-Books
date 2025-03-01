@@ -32,7 +32,11 @@
 </script>
 
 <div class="rounded-lg shadow relative border-slate-400">
-	<a class="bg-muted min-h-[170px]" href={`/dashboard/books/${brn}`}>
+	<a
+		class="bg-muted min-h-[170px]"
+		href={`/dashboard/books/${brn}`}
+		data-sveltekit-preload-data="tap"
+	>
 		{#if imageLink}
 			<img src={imageLink} alt={title} class="rounded-t-lg" />
 		{/if}
