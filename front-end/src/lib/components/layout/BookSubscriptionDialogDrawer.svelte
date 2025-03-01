@@ -55,10 +55,17 @@
 <div class="hidden md:block">
 	<Dialog.Root>
 		<Dialog.Trigger asChild let:builder>
-			<Button class="rounded-lg w-full" builders={[builder]}>
-				<BellPlus class="w-5 h-5 mr-3" />
-				Subscribe Updates
-			</Button>
+			{#if subscriptions.length === 0}
+				<Button class="rounded-lg w-full" builders={[builder]}>
+					<BellPlus class="w-5 h-5 mr-3" />
+					Subscribe Updates
+				</Button>
+			{:else}
+				<Button class="rounded-lg w-full" builders={[builder]} variant="secondary">
+					<BellPlus class="w-5 h-5 mr-3" />
+					Update Subscriptions
+				</Button>
+			{/if}
 		</Dialog.Trigger>
 
 		<Dialog.Content class="max-w-4xl">
@@ -101,10 +108,17 @@
 <div class="block md:hidden">
 	<Drawer.Root>
 		<Drawer.Trigger asChild let:builder>
-			<Button class="rounded-lg w-full" builders={[builder]}>
-				<BellPlus class="w-5 h-5 mr-3" />
-				Subscribe Updates
-			</Button>
+			{#if subscriptions.length === 0}
+				<Button class="rounded-lg w-full" builders={[builder]}>
+					<BellPlus class="w-5 h-5 mr-3" />
+					Subscribe Updates
+				</Button>
+			{:else}
+				<Button class="rounded-lg w-full" builders={[builder]} variant="secondary">
+					<BellPlus class="w-5 h-5 mr-3" />
+					Update Subscriptions
+				</Button>
+			{/if}
 		</Drawer.Trigger>
 		<Drawer.Content>
 			<Drawer.Header class="text-left">

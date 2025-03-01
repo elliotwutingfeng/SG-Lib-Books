@@ -32,7 +32,6 @@
 	} = $props();
 
 	let externalLink = $derived(`https://catalogue.nlb.gov.sg/search/card?recordId=${book.brn}`);
-	let subscriptionDisabled = $derived(!book.bookmarked);
 </script>
 
 <section class="flex md:flex-row flex-col gap-9">
