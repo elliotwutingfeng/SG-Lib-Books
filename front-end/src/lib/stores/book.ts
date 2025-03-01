@@ -1,5 +1,5 @@
 import { toast } from 'svelte-sonner';
-import { get, derived, writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 
 import type { Book } from '$lib/models';
 import { getBooks, likeBook, unlikeBook } from '$lib/api/book';
