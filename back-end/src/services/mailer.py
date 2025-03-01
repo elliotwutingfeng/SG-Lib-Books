@@ -125,9 +125,7 @@ TABLE_ROW_TEMPLATE = """
                     </tr>
 """
 
-LIBRARY_TEMPLATE = """
-                          <li style="margin-top: 4px; margin-bottom: 0">{BranchName}</li>
-"""
+LIBRARY_TEMPLATE = """<li style="margin-top: 4px; margin-bottom: 0">{BranchName}</li>"""
 
 
 class Mailer:
@@ -179,6 +177,5 @@ class Mailer:
         self.mailer.set_plaintext_content(
             "New books are available. Check your email for details.", mail_body
         )
-        print(mail_body)
 
         return self.mailer.send(mail_body)

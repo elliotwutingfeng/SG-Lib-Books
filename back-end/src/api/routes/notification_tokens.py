@@ -29,7 +29,7 @@ async def register_token(
         return new_token
 
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occurred with database transaction.",
@@ -54,7 +54,7 @@ async def cleanup_old_tokens(
             await notification_token_crud.delete(db, i=str(token.id))
 
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occurred with database transaction.",
@@ -82,7 +82,7 @@ async def deregister_token(
         await notification_token_crud.delete(db, i=str(existing_token.id))
 
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occurred with database transaction.",

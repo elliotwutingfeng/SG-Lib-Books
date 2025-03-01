@@ -43,6 +43,7 @@ async def send_emails(db: SDBDep, user: CurrentUser, mailer: MailerDep):
         )
 
     except Exception as e:
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR, f"An error occurred: {str(e)}"
         )

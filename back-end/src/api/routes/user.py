@@ -40,6 +40,7 @@ async def update_user(
         updated_user = await user_crud.update(db, i=user.email, obj_in=user_update)
         return updated_user
     except Exception as e:
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -60,6 +61,7 @@ async def delete_user(db: SDBDep, user: CurrentUser, client: SDBDep):
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
     except Exception as e:
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",

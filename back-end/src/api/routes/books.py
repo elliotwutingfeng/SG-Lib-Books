@@ -54,7 +54,7 @@ async def get_books(
         ]
 
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -134,9 +134,9 @@ async def get_book(
         return BookResponse(**book_info.model_dump(), avails=book_avail)
 
     except Exception as e:
+        print(f"Error: {e}")
         if isinstance(e, HTTPException):
             raise e
-        print(e)
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -203,6 +203,7 @@ async def like_book(
         )
         return BookResponse(**book_info_result.model_dump(), avails=all_avail_bks)
     except Exception as e:
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -317,7 +318,7 @@ async def update_book_avail(
             obj_ins=new_book_avails,
         )
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         if isinstance(e, HTTPException):
             raise e
         raise HTTPException(
@@ -392,4 +393,5 @@ async def unlike_book(bid: int, db: SDBDep, user: CurrentUser):
     bid_no = str(bid)
 
     await book_info_crud.delete_owner(db, i=bid_no, email=user.email)
+    # TODO: Delete book if no more owner
     return

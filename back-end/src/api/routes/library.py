@@ -29,7 +29,7 @@ async def get_libraries(
         ]
 
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -58,7 +58,7 @@ async def get_library(
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        print(e)
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -81,6 +81,7 @@ async def favourite_library(
             email=user.email,
         )
     except Exception as e:
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -95,6 +96,7 @@ async def unfavourite_library(name: str, db: SDBDep, user: CurrentUser):
     try:
         await library_crud.delete_owner(db, i=name, email=user.email)
     except Exception as e:
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",

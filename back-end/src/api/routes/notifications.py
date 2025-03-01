@@ -20,7 +20,7 @@ async def get_notifications(
         return await notification_crud.get_multi_by_owner(db, email=user.email)
 
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -55,7 +55,9 @@ async def read_notification(
             i=nid,
         )
     except Exception as e:
-        print(e)
+        if isinstance(e, HTTPException):
+            raise e
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -91,6 +93,9 @@ async def unread_notification(
             i=nid,
         )
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",

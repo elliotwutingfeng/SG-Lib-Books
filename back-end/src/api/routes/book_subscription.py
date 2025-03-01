@@ -30,6 +30,9 @@ async def get_book_subscription(
             )
         return book_subscription
     except Exception as e:
+        print(f"Error: {e}")
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -54,7 +57,11 @@ async def create_book_subscriptions(
                 await book_subscription_crud.create(db, obj_in=book_subscription)
             )
         except Exception as e:
-            print("Error occured with database transaction", e)
+            print(f"Error: {e}")
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Error occured with database transaction.",
+            ) from e
 
     return subscriptions_created
 
@@ -69,6 +76,7 @@ async def update_book_subscription(
     try:
         return await book_subscription_crud.update(db, obj_in=book_subscription, i=id)
     except Exception as e:
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -103,6 +111,9 @@ async def delete_book_subscription(
             )
         return delete_book
     except Exception as e:
+        print(f"Error: {e}")
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
