@@ -256,14 +256,15 @@ async def update_book_avail(
             db, itemNos=[book_avail.ItemNo for book_avail in book_avail_changes]
         )
 
-        user_dict = {}  # email: User
+        user_set = set()  # email
         # Create notification for each subscription
         for subscription in subscriptions:
-            if subscription.email in user_dict:
-                user = user_dict[subscription.email]
-            else:
-                user = await user_crud.get(db, i=subscription.email)
-                user_dict[subscription.email] = user
+            if subscription.email in user_set:
+                # Skip if user has already been notified
+                continue
+
+            user = await user_crud.get(db, i=subscription.email)
+            user_set.add(subscription.email)
 
             # Skip if user does not exist
             if not user:
