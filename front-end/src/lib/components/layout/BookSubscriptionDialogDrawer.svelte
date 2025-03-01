@@ -58,7 +58,7 @@
 			{#if subscriptions.length === 0}
 				<Button class="rounded-lg w-full" builders={[builder]}>
 					<BellPlus class="w-5 h-5 mr-3" />
-					Subscribe Updates
+					Subscribe Daily Updates
 				</Button>
 			{:else}
 				<Button class="rounded-lg w-full" builders={[builder]} variant="secondary">
@@ -70,7 +70,7 @@
 
 		<Dialog.Content class="max-w-4xl">
 			<Dialog.Header>
-				<Dialog.Title>Subcribe to Book Loans Updates in the following Libraries</Dialog.Title>
+				<Dialog.Title>Subcribe to Daily Book Updates in the following Libraries</Dialog.Title>
 				<Dialog.Description
 					>Get notified whenever <span class="underline">{book.title}</span> is available every morning
 					in your favourite libraries.
@@ -111,7 +111,7 @@
 			{#if subscriptions.length === 0}
 				<Button class="rounded-lg w-full" builders={[builder]}>
 					<BellPlus class="w-5 h-5 mr-3" />
-					Subscribe Updates
+					Subscribe Daily Updates
 				</Button>
 			{:else}
 				<Button class="rounded-lg w-full" builders={[builder]} variant="secondary">
@@ -122,7 +122,7 @@
 		</Drawer.Trigger>
 		<Drawer.Content>
 			<Drawer.Header class="text-left">
-				<Drawer.Title>Subcribe to Book Loans Updates in the following Libraries</Drawer.Title>
+				<Drawer.Title>Subcribe to Daily Book Updates in the following Libraries</Drawer.Title>
 				<Drawer.Description>
 					Get notified whenever your favourite book is available every morning.
 				</Drawer.Description>
