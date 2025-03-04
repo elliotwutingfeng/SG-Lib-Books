@@ -47,9 +47,9 @@
 				<!-- loan. -->
 				Borrowing your favourite books easier at your neighbourhood public libraries
 			</p>
-			<Button href="https://forms.gle/C4MyKxAyUhhgds4U9" class="ml-auto mb-10">
+			<Button href="/dashboard" class="ml-auto mb-10">
 				<LogIn class="mr-2 h-4 w-4" />
-				<span>Join Our Waitlist!</span>
+				<span>Try out now!</span>
 			</Button>
 			<Carousel.Root
 				class="mb-10 shadow-lg shadow-slate-500 rounded-xl"
@@ -120,7 +120,7 @@
 					Calling all Singapore library users!
 				</h2>
 				<p class="text-slate-700 text-lg mb-3">
-					Tired of always missing out on your favorite books at the library? We’ve got you covered!
+					Tired of always missing out on your favorite books at the library? We've got you covered!
 				</p>
 				<ul class="text-slate-700 text-lg">
 					<li><span class="mr-3">📚</span> Bookmark your favourite titles</li>
