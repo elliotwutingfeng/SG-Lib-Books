@@ -1,3 +1,19 @@
+export interface User {
+	email: string;
+	username: string | undefined;
+	channel_push: boolean;
+	channel_email: boolean;
+	notification_type: 'all_notif' | 'book_updates_only' | 'no_notif';
+}
+
+export interface UserUpdate {
+	email: string;
+	username?: string;
+	channel_push?: boolean;
+	channel_email?: boolean;
+	notification_type?: 'all_notif' | 'book_updates_only' | 'no_notif';
+}
+
 export interface BookInfo {
 	BID: number;
 	TitleName?: string;
@@ -25,6 +41,16 @@ export interface BookResponse extends BookInfo {
 	avails: BookAvail[];
 }
 
+export interface BookSubscriptionCreate {
+	ItemNo: string;
+	email: string;
+}
+
+export interface BookSubscription extends BookSubscriptionCreate {
+	id: number;
+	created_at: Date;
+}
+
 export interface Library {
 	name: string;
 	opening_status: string;
@@ -37,4 +63,20 @@ export interface Library {
 
 export interface LibraryResponse extends Library {
 	isFavourite: boolean;
+}
+
+export interface Notification {
+	id: number;
+	title: string;
+	description?: string;
+	createdAt: Date;
+	action: string;
+	isRead: boolean;
+}
+
+export interface NotificationToken {
+	id: number;
+	created_at: Date;
+	token: string;
+	email: string;
 }

@@ -2,7 +2,7 @@
 FastAPI dependencies
 """
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
@@ -12,6 +12,9 @@ from nlb_catalogue_client import AuthenticatedClient
 from supabase import create_client, Client
 
 from src.config import settings
+from src.services.cloud_task import CloudTask
+from src.services.firebase_messaging import FirebaseMessaging
+from src.services.mailer import Mailer
 
 
 super_client: Client | None = None
@@ -44,7 +47,9 @@ reusable_oauth2 = OAuth2PasswordBearer(
 AccessTokenDep = Annotated[str, Depends(reusable_oauth2)]
 
 
-async def get_current_user(access_token: AccessTokenDep) -> User | None:
+async def get_current_user(
+    access_token: AccessTokenDep,
+) -> User | Literal["super"] | None:
     """get current user from access_token and validate same time. Accept service_role token"""
     if not super_client:
         raise HTTPException(status_code=500, detail="Super client not initialized")
@@ -55,7 +60,7 @@ async def get_current_user(access_token: AccessTokenDep) -> User | None:
         )
 
     if access_token == settings.SUPABASE_KEY:
-        return None
+        return "super"
     try:
         user_rsp = super_client.auth.get_user(jwt=access_token)
     except AuthApiError as e:
@@ -82,3 +87,37 @@ def get_nlb_api_client():
 
 
 NLBClientDep = Annotated[AuthenticatedClient, Depends(get_nlb_api_client)]
+
+
+# External Services
+def get_cloud_task():
+    """Return cloud task client"""
+    yield CloudTask(
+        project=settings.GC_PROJECT_ID,
+        location=settings.GC_LOCATION,
+        queue=settings.GC_QUEUE,
+        url=settings.GC_BACKEND_URI,
+    )
+
+
+CloudTaskDep = Annotated[CloudTask, Depends(get_cloud_task)]
+
+
+def get_firebase_messaging():
+    """Return firebase messaging client"""
+    yield FirebaseMessaging(settings.GC_FIREBASE_SA_DICT)
+
+
+MessagingDep = Annotated[FirebaseMessaging, Depends(get_firebase_messaging)]
+
+
+def get_mailer():
+    """Return mailer client"""
+    yield Mailer(
+        api_key=settings.MAILERSEND_API_KEY,
+        sender_email=settings.MAILERSEND_EMAIL,
+        sender_name=settings.MAILERSEND_NAME,
+    )
+
+
+MailerDep = Annotated[Mailer, Depends(get_mailer)]

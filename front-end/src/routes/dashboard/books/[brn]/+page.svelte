@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
 	import { page } from '$app/stores';
 
 	import Button from '$lib/components/ui/button/button.svelte';
 	import BookDetailsSection from '$lib/components/layout/BookDetailsSection.svelte';
 	import LibraryCarousel from '$lib/components/layout/LibraryCarousel.svelte';
 
-	import { likeBook, unlikeBook } from '$lib/api/book';
-	import { favouriteLibrary, unfavouriteLibrary } from '$lib/api/library';
 	import type { BookAvail } from '$lib/api/models';
 	import type { BookProp, Library, LibraryProp } from '$lib/models';
+	import type { BookSubscription } from '$lib/api/models';
 	import { bookStore, libraryAPIStore } from '$lib/stores';
+	import { toggleBookmarkBook } from '$lib/stores/book';
+	import { toggleFavouriteLibrary } from '$lib/stores/library';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -20,44 +20,17 @@
 	let isError = $state(false);
 	let book: BookProp = $state({
 		brn: brn,
-		bookmarked: $bookStore.hasOwnProperty($page.params.brn),
+		bookmarked: $bookStore[brn]?.bookmarked ?? false,
 		bookMarkLoading: false,
 		onBookMarked: async () => {
 			book.bookMarkLoading = true;
 			try {
-				if ($bookStore.hasOwnProperty(brn)) {
-					console.log('Unbookmark book', brn);
-					await unlikeBook(data.client, brn);
-					toast.success(`Book ${$bookStore[brn].title} is removed`);
-					bookStore.update((s) => {
-						delete s[brn];
-						return s;
-					});
-				} else {
-					console.log('bookmark book', brn);
-					await likeBook(data.client, brn);
-					bookStore.update((s) => {
-						s[brn] = { ...book, bookmarked: true };
-						return s;
-					});
-					toast.success(`Book ${$bookStore[brn].title} is added`);
-				}
-				book.bookMarkLoading = false;
-				book.bookmarked = !book.bookmarked;
-			} catch (error) {
-				if (error instanceof Error) {
-					if (error.cause === 429) {
-						toast.warning("We are hitting NLB's API too hard. Please try again later.");
-					} else {
-						toast.warning('Bookmark request has failed. Please try again later.');
-					}
-				}
-				console.error('Bookmark/Unbookmark error:', error);
-				book.bookMarkLoading = false;
-			}
+				await toggleBookmarkBook(data.client, book.brn);
+			} catch (e) {}
+			book.bookMarkLoading = false;
 		}
 	});
-
+	let subscriptions: BookSubscription[] = $state([]);
 	let librariresProps: LibraryProp[] = $state([]);
 	let librariesFavourite: LibraryProp[] = $derived(
 		librariresProps.filter((lib) => {
@@ -65,21 +38,20 @@
 		})
 	);
 	let librariesAvail: LibraryProp[] = $derived(
-		librariresProps.filter((lib) => {
-			return lib.availBooks.length >= 1 && !lib.favourite;
-		})
+		librariresProps.filter((lib) => lib.availBooks.length > 0 && !lib.favourite)
 	);
 	let librariesOnLoan: LibraryProp[] = $derived(
-		librariresProps.filter((lib) => {
-			return lib.onLoanBooks.length > 0 && lib.availBooks.length == 0 && !lib.favourite;
-		})
+		librariresProps.filter(
+			(lib) => lib.onLoanBooks.length > 0 && lib.availBooks.length == 0 && !lib.favourite
+		)
 	);
 
 	// Compute bookmarked based on bookStore update
 	$effect(() => {
-		book.bookmarked = $bookStore.hasOwnProperty($page.params.brn);
+		book.bookmarked = $bookStore[brn]?.bookmarked ?? false;
 	});
 
+	// Receives API response for book details and update frontend states
 	$effect(() => {
 		(async () => {
 			try {
@@ -104,6 +76,18 @@
 		})();
 	});
 
+	// Receives API response for subscription details and update frontend states
+	$effect(() => {
+		(async () => {
+			try {
+				subscriptions = await data.subscriptionResponse;
+			} catch (error) {
+				isError = true;
+			}
+		})();
+	});
+
+	// Compute library availability state
 	$effect(() => {
 		// Compute library availability state
 		const libraries: { [key: string]: Library } = $libraryAPIStore;
@@ -126,10 +110,13 @@
 					console.warn(`Library ${k} does not exist in database`);
 					continue;
 				}
-				if (bookAvail.StatusDesc == 'On Loan') {
+				if (bookAvail.StatusDesc == 'Available') {
+					libraries[k].availBooks.push(book);
+				} else if (bookAvail.StatusDesc == 'On Loan') {
 					libraries[k].onLoanBooks.push({ ...book, dueDate: `Due ${bookAvail.DueDate}` });
 				} else {
-					libraries[k].availBooks.push(book);
+					// Declare transitory states as unavailable
+					libraries[k].onLoanBooks.push({ ...book, dueDate: undefined });
 				}
 			}
 		}
@@ -138,29 +125,8 @@
 				...lib,
 				onFavourite: async () => {
 					try {
-						if (lib.favourite) {
-							console.log('unlike library');
-							await unfavouriteLibrary(data.client, lib.name);
-							toast.success(`${lib.name} is removed from your favourites`);
-						} else {
-							console.log('like library');
-							await favouriteLibrary(data.client, lib.name);
-							toast.success(`${lib.name} is added to your favourites`);
-						}
-						libraryAPIStore.update((s) => {
-							s[lib.name].favourite = !s[lib.name].favourite;
-							return s;
-						});
-					} catch (error) {
-						if (error instanceof Error) {
-							if (error.cause === 429) {
-								toast.warning("We are hitting NLB's API too hard. Please try again later.");
-							} else {
-								toast.warning('Library favourite request has failed. Please try again later.');
-							}
-						}
-						console.error('Favourite/unfavourite error:', error);
-					}
+						await toggleFavouriteLibrary(data.client, lib.name);
+					} catch (e) {}
 				}
 			};
 		});
@@ -177,7 +143,13 @@
 
 <main class="container flex flex-col gap-8 p-8 min-h-[85vh]">
 	{#if !isError}
-		<BookDetailsSection {book} {isLoading} />
+		<BookDetailsSection
+			{book}
+			libraries={librariresProps}
+			{isLoading}
+			{subscriptions}
+			client={data.client}
+		/>
 		{#if librariesFavourite.length > 0}
 			<LibraryCarousel
 				title="Your Favourite"

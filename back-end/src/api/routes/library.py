@@ -19,15 +19,17 @@ async def get_libraries(
 
     try:
         libraries = await library_crud.get_all(db)
-        libraries_fav = await library_crud.get_multi_by_owner(db, username=user.email)
-        favourite = {lib.name for lib in libraries_fav} if libraries_fav else {}
+        libraries_fav: list[Library] = await library_crud.get_multi_by_owner(
+            db, email=user.email
+        )
+        favourite = {lib.name for lib in libraries_fav}
         return [
             LibraryResponse(**lib.model_dump(), isFavourite=lib.name in favourite)
             for lib in libraries
         ]
 
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -56,7 +58,7 @@ async def get_library(
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        print(e)
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -76,9 +78,10 @@ async def favourite_library(
         await library_crud.create_owner(
             db,
             name=name,
-            username=user.email,
+            email=user.email,
         )
     except Exception as e:
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",
@@ -91,8 +94,9 @@ async def unfavourite_library(name: str, db: SDBDep, user: CurrentUser):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email is not found for user")
 
     try:
-        await library_crud.delete_owner(db, i=name, username=user.email)
+        await library_crud.delete_owner(db, i=name, email=user.email)
     except Exception as e:
+        print(f"Error: {e}")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Error occured with database transaction.",

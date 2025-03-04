@@ -12,9 +12,24 @@
 
 	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import type { BookProp } from '$lib/models';
+	import type BackendAPIClient from '$lib/api/client';
+	import type { BookProp, LibraryProp } from '$lib/models';
+	import BookSubscriptionDialogDrawer from '$lib/components/layout/BookSubscriptionDialogDrawer.svelte';
+	import type { BookSubscription } from '$lib/api/models';
 
-	let { book, isLoading }: { book: BookProp; isLoading: boolean } = $props();
+	let {
+		client,
+		book,
+		libraries,
+		subscriptions,
+		isLoading
+	}: {
+		client: BackendAPIClient;
+		book: BookProp;
+		libraries: LibraryProp[];
+		subscriptions: BookSubscription[];
+		isLoading: boolean;
+	} = $props();
 
 	let externalLink = $derived(`https://catalogue.nlb.gov.sg/search/card?recordId=${book.brn}`);
 </script>
@@ -43,6 +58,9 @@
 						Save Book
 					</Button>
 				{/if}
+			{/if}
+			{#if book.bookmarked}
+				<BookSubscriptionDialogDrawer {book} {libraries} {subscriptions} {client} />
 			{/if}
 		</div>
 	</div>

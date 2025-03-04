@@ -1,15 +1,63 @@
 <script lang="ts">
+	import { toast } from 'svelte-sonner';
 	import type { User } from '@supabase/supabase-js';
+	import { Book, LibraryBig, LogOut, LogIn, Search, Settings } from 'lucide-svelte';
 
-	import { Book, LibraryBig, LogOut, LogIn, Search } from 'lucide-svelte';
-	import { Button } from '$lib/components/ui/button';
 	import * as Avatar from '$lib/components/ui/avatar';
+	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import NotificationDropdown from '$lib/components/layout/NotificationDropdown.svelte';
+	import type BackendAPIClient from '$lib/api/client';
+	import { registerToken } from '$lib/api/notification_tokens';
+	import requestToken from '$lib/notification'; // Firebase FCM to handle realtime notifications
+	import {
+		fetchNotifications,
+		notificationStore,
+		notificationToken,
+		refreshNotification,
+		readAllNotification
+	} from '$lib/stores/notification';
 	import { getInitials } from '$lib/utils';
 
-	let { user }: { user?: User | null } = $props();
+	let { user, client }: { user?: User | null; client?: BackendAPIClient } = $props();
+	let isNotificationOpen: boolean = $state(false);
 	let isLoggedIn: boolean = $derived(user != null);
+	let isNotificationLoading: boolean = $state(false);
 	let username: string = $derived(getInitials(user?.user_metadata.name || 'User'));
+
+	// Request permission for notifications
+	$effect(() => {
+		(async () => {
+			if (isLoggedIn) {
+				const token = await requestToken();
+				notificationToken.set(typeof token === 'string' ? token : null);
+				if (token !== undefined && client !== undefined) {
+					try {
+						await registerToken(client, token);
+					} catch (error) {
+						console.error(error);
+						toast.warning('Failed to register notification token');
+					}
+				}
+			}
+		})();
+	});
+
+	$effect(() => {
+		(async () => {
+			// Fetch notifications from API
+			if (client && $refreshNotification) {
+				isNotificationLoading = true;
+				try {
+					await fetchNotifications(client);
+				} catch (error) {
+					toast.warning('Failed to fetch new notifications');
+				}
+				refreshNotification.set(false);
+				isNotificationLoading = false;
+			}
+		})();
+	});
 </script>
 
 <header class="flex flex-row justify-between p-2 border shadow items-center min-h-14">
@@ -38,27 +86,39 @@
 			</Button>
 		</nav>
 
-		<DropdownMenu.Root>
-			<DropdownMenu.Trigger>
-				<Avatar.Root class="block">
-					<Avatar.Fallback>{username}</Avatar.Fallback>
-				</Avatar.Root>
-			</DropdownMenu.Trigger>
-			<DropdownMenu.Content>
-				<DropdownMenu.Group>
-					<DropdownMenu.Label>My Account</DropdownMenu.Label>
-					<DropdownMenu.Separator />
-					<!-- <DropdownMenu.Item href="/dashboard/settings"> -->
-					<!-- 	<Settings class="mr-2 h-4 w-4" /> -->
-					<!-- 	<span>Settings</span> -->
-					<!-- </DropdownMenu.Item> -->
-					<DropdownMenu.Item href="/auth/sign-out">
-						<LogOut class="mr-2 h-4 w-4" />
-						<span>Log out</span>
-					</DropdownMenu.Item>
-				</DropdownMenu.Group>
-			</DropdownMenu.Content>
-		</DropdownMenu.Root>
+		<div class="flex gap-3">
+			<NotificationDropdown
+				bind:menuOpen={isNotificationOpen}
+				notifications={$notificationStore}
+				isLoading={isNotificationLoading}
+				selectAll={client !== undefined
+					? async () => {
+							await readAllNotification(client);
+						}
+					: () => {}}
+			/>
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger>
+					<Avatar.Root class="block">
+						<Avatar.Fallback>{username}</Avatar.Fallback>
+					</Avatar.Root>
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content>
+					<DropdownMenu.Group>
+						<DropdownMenu.Label>My Account</DropdownMenu.Label>
+						<DropdownMenu.Separator />
+						<DropdownMenu.Item href="/dashboard/settings">
+							<Settings class="mr-2 h-4 w-4" />
+							<span>Settings</span>
+						</DropdownMenu.Item>
+						<DropdownMenu.Item href="/auth/sign-out">
+							<LogOut class="mr-2 h-4 w-4" />
+							<span>Log out</span>
+						</DropdownMenu.Item>
+					</DropdownMenu.Group>
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
+		</div>
 	{:else}
 		<!-- User is not logged in -->
 		<Button href="/auth/sign-in" class="ml-auto">
