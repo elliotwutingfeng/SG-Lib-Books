@@ -61,5 +61,20 @@ class CRUDBookSubscription(
     async def delete(self, db: Client, *, i: str) -> BookSubscription | None:
         return await super().delete(db, i=i)
 
+    async def delete_by_owner_and_itemNo(
+        self, db: Client, *, email: str, itemNos: list[str]
+    ) -> list[BookSubscription] | None:
+        response = (
+            db.table(self.model.table_name)
+            .delete()
+            .eq("email", email)
+            .in_("ItemNo", itemNos)
+            .execute()
+        )
+        deleted = response.data
+        if not deleted:
+            return None
+        return [self.model(**item) for item in deleted]
+
 
 book_subscription_crud = CRUDBookSubscription(BookSubscription)

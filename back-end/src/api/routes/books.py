@@ -391,8 +391,17 @@ async def unlike_book(bid: int, db: SDBDep, user: CurrentUser):
     if not user or not user.email:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email is not found for user")
 
-    bid_no = str(bid)
+    # Get all book avail for given book
+    book_avail = await book_avail_crud.get_all_by_bid(db, bid=bid)
 
-    await book_info_crud.delete_owner(db, i=bid_no, email=user.email)
-    # TODO: Delete book if no more owner
+    # Delete Book subscriptions for given books
+    await book_subscription_crud.delete_by_owner_and_itemNo(
+        db, email=user.email, itemNos=[book.ItemNo for book in book_avail]
+    )
+
+    # Delete book owner relationship
+    await book_info_crud.delete_owner(db, i=str(bid), email=user.email)
+
+    # Delete book if no more owner
+    await book_info_crud.delete_if_no_owner(db, i=str(bid))
     return

@@ -1,6 +1,7 @@
 from typing import Optional
 
 from supabase import Client
+from postgrest.types import CountMethod
 
 from src.crud.base import CRUDBase
 from src.modals.users import User
@@ -70,6 +71,16 @@ class CRUDBookInfo(CRUDBase[BookInfo, BookInfoCreate, BookInfoUpdate]):
             if User.table_name in item
         ]
 
+    async def count_owners_by_bid(self, db: Client, *, i: str) -> int:
+        response = (
+            db.table("user_books")
+            .select("*", count=CountMethod.exact)
+            .eq("BID", i)
+            .execute()
+        )
+
+        return response.count if response.count else 0
+
     async def update(
         self,
         db: Client,
@@ -86,6 +97,12 @@ class CRUDBookInfo(CRUDBase[BookInfo, BookInfoCreate, BookInfoUpdate]):
     async def delete(self, db: Client, *, i: str) -> BookInfo | None:
         db.table("user_books").delete().eq("BID", i).execute()
         return await super().delete(db, i=i)
+
+    async def delete_if_no_owner(self, db: Client, *, i: str) -> BookInfo | None:
+        owners = await self.count_owners_by_bid(db, i=i)
+        if owners != 0:
+            return None
+        return await self.delete(db, i=i)
 
 
 book_info_crud = CRUDBookInfo(BookInfo)
