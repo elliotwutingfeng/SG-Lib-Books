@@ -1,6 +1,17 @@
+from datetime import datetime
 from functools import lru_cache
 
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class NLBAPIKey(BaseModel):
+    """NLB API Key model and expiry date"""
+
+    app_id: str
+    api_key: str
+    # expiry date in ISO format
+    expires_at: datetime
 
 
 class Settings(BaseSettings):
@@ -23,9 +34,8 @@ class Settings(BaseSettings):
         "https://sg-lib-books.web.app",
     ]
 
-    # NLB API Key
-    nlb_rest_app_id: str = "NLB_APP_ID"
-    nlb_rest_api_key: str = "NLB_API_KEY"
+    # List of NLB API Keys
+    nlb_api_keys: list[NLBAPIKey] = []
 
     # Supabase API Key
     SUPABASE_URL: str = "http://127.0.0.1:54321"

@@ -2,6 +2,8 @@
 FastAPI dependencies
 """
 
+import random
+from datetime import datetime, timezone
 from typing import Annotated, Literal
 
 from fastapi import Depends, HTTPException
@@ -76,13 +78,28 @@ CurrentUser = Annotated[User | None, Depends(get_current_user)]
 
 
 def get_nlb_api_client():
-    """Return authenticated client to access NLB API"""
+    """Return an authenticated client to access NLB API using one of the non‐expired API keys."""
+    # Filter to only include API keys that haven’t expired.
+    available_keys = [
+        key
+        for key in settings.nlb_api_keys
+        if key.expires_at.replace(tzinfo=timezone.utc) > datetime.now(timezone.utc)
+    ]
+    if not available_keys:
+        print("No available API keys at this time.")
+        raise HTTPException(
+            status_code=503, detail="No available API keys at this time."
+        )
+
+    selected_key = random.choice(available_keys)
+    print(f"Using API key: {selected_key.app_id}")
+
     yield AuthenticatedClient(
         base_url="https://openweb.nlb.gov.sg/api/v2/Catalogue/",
         auth_header_name="X-API-KEY",
-        token=settings.nlb_rest_api_key,
+        token=selected_key.api_key,
         prefix="",
-        headers={"X-APP-Code": settings.nlb_rest_app_id},
+        headers={"X-APP-Code": selected_key.app_id},
     )
 
 
